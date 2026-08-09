@@ -241,4 +241,8 @@ def play_animation(screen, anim_pen):
     anim_pen.pendown()
     anim_pen.color("#FFD700")
     anim_pen.write("Rebellion Crushed - British Won", align="center", font=("Georgia", 26, "bold"))
+<<<<<<< HEAD
     screen.update()
+=======
+    screen.update()
+>>>>>>> 426e6aea9be333f73ff76b0f8fecfdd39bfc0824

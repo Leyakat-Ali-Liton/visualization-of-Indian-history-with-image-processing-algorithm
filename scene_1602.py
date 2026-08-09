@@ -238,4 +238,8 @@ if __name__ == "__main__":
 
     play_animation(screen, anim_pen)
 
+<<<<<<< HEAD
     screen.mainloop()
+=======
+    screen.mainloop()
+>>>>>>> 426e6aea9be333f73ff76b0f8fecfdd39bfc0824
