@@ -3,16 +3,11 @@ import time
 import random
 import turtle
 
-
-# =========================================================
-# HELPER: Safe Update to Prevent TclError when Skipping
-# =========================================================
 def safe_update(screen):
     try:
         screen.update()
     except:
         pass
-
 
 def safe_goto(pen, x, y):
     try:
@@ -20,91 +15,82 @@ def safe_goto(pen, x, y):
     except:
         pass
 
-
-# =========================================================
-# LAB ALGORITHMS & SHAPES
-# =========================================================
-
 def bresenham_line(pen, x1, y1, x2, y2, color="white", size=2):
+    # DDA line drawing algorithm
     try:
+        dx = x2 - x1
+        dy = y2 - y1
+        steps = int(max(abs(dx), abs(dy)))
+        if steps == 0:
+            return
+        x_inc = dx / steps
+        y_inc = dy / steps
+        x, y = x1, y1
         pen.penup()
+        safe_goto(pen, x, y)
+        pen.pendown()
         pen.color(color)
-        x1, y1 = int(x1), int(y1)
-        x2, y2 = int(x2), int(y2)
-        dx = abs(x2 - x1)
-        dy = abs(y2 - y1)
-        sx = 1 if x1 < x2 else -1
-        sy = 1 if y1 < y2 else -1
-        err = dx - dy
-
-        while True:
-            safe_goto(pen, x1, y1)
-            pen.dot(size)
-            if x1 == x2 and y1 == y2:
-                break
-            e2 = 2 * err
-            if e2 > -dy:
-                err -= dy
-                x1 += sx
-            if e2 < dx:
-                err += dx
-                y1 += sy
+        pen.pensize(size)
+        for _ in range(steps):
+            x += x_inc
+            y += y_inc
+            safe_goto(pen, x, y)
+        pen.pensize(1)
+        pen.penup()
     except:
         pass
 
-
 def midpoint_circle(pen, xc, yc, r, color="red", size=2, fill=False):
+    # Mid-Point circle drawing algorithm
     try:
-        pen.penup()
-        pen.color(color)
-        x = 0;
-        y = int(r);
+        x = 0
+        y = r
         p = 1 - r
-
-        def draw_points_and_fill(xc, yc, x, y):
-            points = [(xc + x, yc + y), (xc - x, yc + y), (xc + x, yc - y), (xc - x, yc - y),
-                      (xc + y, yc + x), (xc - y, yc + x), (xc + y, yc - x), (xc - y, yc - x)]
-            for px, py in points:
-                safe_goto(pen, px, py)
-                pen.dot(size)
-                if fill:
-                    bresenham_line(pen, xc - x, yc + y, xc + x, yc + y, color=color, size=size)
-                    bresenham_line(pen, xc - x, yc - y, xc + x, yc - y, color=color, size=size)
-
-        draw_points_and_fill(xc, yc, x, y)
-        while x < y:
+        pen.color(color)
+        pen.pensize(size)
+        while x <= y:
+            if fill:
+                pen.penup(); safe_goto(pen, xc - x, yc + y); pen.pendown(); safe_goto(pen, xc + x, yc + y)
+                pen.penup(); safe_goto(pen, xc - x, yc - y); pen.pendown(); safe_goto(pen, xc + x, yc - y)
+                pen.penup(); safe_goto(pen, xc - y, yc + x); pen.pendown(); safe_goto(pen, xc + y, yc + x)
+                pen.penup(); safe_goto(pen, xc - y, yc - x); pen.pendown(); safe_goto(pen, xc + y, yc - x)
+            else:
+                for px, py in [(x, y), (-x, y), (x, -y), (-x, -y), (y, x), (-y, x), (y, -x), (-y, -x)]:
+                    pen.penup()
+                    safe_goto(pen, xc + px, yc + py)
+                    pen.pendown()
+                    pen.dot(size, color)
             x += 1
             if p < 0:
                 p += 2 * x + 1
             else:
                 y -= 1
                 p += 2 * (x - y) + 1
-            draw_points_and_fill(xc, yc, x, y)
-    except:
-        pass
-
-
-def draw_filled_pillar(pen, cx, cy, width, height, color="#FFFFFF"):
-    try:
-        pen.penup();
-        safe_goto(pen, cx - width / 2, cy);
-        pen.pendown()
-        pen.color(color);
-        pen.fillcolor(color);
-        pen.begin_fill()
-        safe_goto(pen, cx - width / 2, cy + height);
-        safe_goto(pen, cx + width / 2, cy + height)
-        safe_goto(pen, cx + width / 2, cy);
-        safe_goto(pen, cx - width / 2, cy)
-        pen.end_fill();
         pen.penup()
     except:
         pass
 
+def draw_filled_pillar(pen, cx, cy, width, height, color="#FFFFFF"):
+    # Basic shapes drawing using OpenGL/Turtle
+    try:
+        pen.penup()
+        safe_goto(pen, cx - width / 2, cy)
+        pen.pendown()
+        pen.color(color)
+        pen.fillcolor(color)
+        pen.begin_fill()
+        safe_goto(pen, cx - width / 2, cy + height)
+        safe_goto(pen, cx + width / 2, cy + height)
+        safe_goto(pen, cx + width / 2, cy)
+        safe_goto(pen, cx - width / 2, cy)
+        pen.end_fill()
+        pen.penup()
+    except:
+        pass
 
-# =========================================================
-# CHARACTER DRAWINGS
-# =========================================================
+def translate_2d(x, y, tx, ty):
+    # 2D Geometric transformation (Translation)
+    return x + tx, y + ty
 
 def draw_soldier(pen, cx, cy):
     midpoint_circle(pen, cx, cy + 30, 10, color="#1A2421", size=2, fill=True)
@@ -116,7 +102,6 @@ def draw_soldier(pen, cx, cy):
     bresenham_line(pen, cx + 4, cy - 15, cx + 12, cy - 40, color="#4A5D23", size=7)
     bresenham_line(pen, cx - 12, cy - 40, cx - 18, cy - 45, color="#111111", size=9)
     bresenham_line(pen, cx + 12, cy - 40, cx + 18, cy - 45, color="#111111", size=9)
-
 
 def draw_student(pen, cx, cy, state="standing"):
     if state == "standing":
@@ -137,7 +122,6 @@ def draw_student(pen, cx, cy, state="standing"):
         bresenham_line(pen, cx - 15, cy - 38, cx - 40, cy - 32, color="#2C3E50", size=6)
         bresenham_line(pen, cx - 15, cy - 42, cx - 40, cy - 48, color="#2C3E50", size=6)
 
-
 def draw_shaheed_minar(pen, cx, cy, scale=1.0):
     midpoint_circle(pen, cx, cy + int(25 * scale), int(18 * scale), color="#E03C31", size=3, fill=True)
     draw_filled_pillar(pen, cx, cy, width=8 * scale, height=50 * scale, color="#FFFFFF")
@@ -148,52 +132,70 @@ def draw_shaheed_minar(pen, cx, cy, scale=1.0):
     bresenham_line(pen, cx - 42 * scale, cy - 2 * scale, cx + 42 * scale, cy - 2 * scale, color="#DDDDDD", size=8)
     bresenham_line(pen, cx - 46 * scale, cy - 8 * scale, cx + 46 * scale, cy - 8 * scale, color="#AAAAAA", size=8)
 
+def get_safe_bangla_pos(used_positions):
+    for _ in range(50):
+        bx = random.randint(30, 360)
+        by = random.randint(-40, 110)
 
-# =========================================================
-# MAIN SCENE ENTRY POINT
-# =========================================================
+        if -100 < bx < 100 and 100 < by < 150:
+            continue
+        if 60 < bx < 200 and 60 < by < 110:
+            continue
+
+        overlap = False
+        for (ux, uy) in used_positions:
+            if abs(bx - ux) < 35 and abs(by - uy) < 35:
+                overlap = True
+                break
+
+        if not overlap:
+            used_positions.append((bx, by))
+            return bx, by
+
+    return random.randint(220, 350), random.randint(-30, 50)
 
 def play_animation_1952(screen, pen):
     screen.tracer(0)
     pen.clear()
 
-    # --- PHASE 1: MAP VIEW ---
     image_name = "map.gif"
     if os.path.exists(image_name):
         screen.bgpic(image_name)
 
     dhaka_x_map, dhaka_y_map = 190, 15
-
-    # Pulse animation
     for r in range(10, 65, 10):
         midpoint_circle(pen, dhaka_x_map, dhaka_y_map, r, color="#E03C31", size=2)
         safe_update(screen)
-        time.sleep(0.00)
+        time.sleep(0.05)
 
-    # No Wait. Instant clear and transition.
     pen.clear()
 
-    # --- PHASE 2: INSTANT BATTLE ---
     try:
         screen.bgpic("nopic")
         screen.bgcolor("#2a1b1b")
     except:
         pass
 
-    # Setup Dedicated Pens for Layering (REMOVES LAG)
     static_pen = turtle.Turtle()
     static_pen.hideturtle()
     static_pen.speed(0)
 
     student_pen = turtle.Turtle()
     student_pen.hideturtle()
-    student_pen.speed(0.1)
+    student_pen.speed(0)
 
     bullet_pen = turtle.Turtle()
     bullet_pen.hideturtle()
-    bullet_pen.speed(0.1)
+    bullet_pen.speed(0)
 
-    # Characters Data
+    urdu_pen = turtle.Turtle()
+    urdu_pen.hideturtle()
+    urdu_pen.speed(0)
+
+    blood_text_pen = turtle.Turtle()
+    blood_text_pen.hideturtle()
+    blood_text_pen.speed(0)
+
     army_x = -220
     fight_y = -80
     soldiers = [
@@ -213,64 +215,71 @@ def play_animation_1952(screen, pen):
         {"x": st_start_x + 250, "y": fight_y - 15, "state": "standing"}
     ]
 
-    # DRAW STATIC ELEMENTS ONCE (Reduces CPU calculation overhead)
     try:
         static_pen.penup()
-        safe_goto(static_pen, 0, 140)
+        safe_goto(static_pen, 0, 120)
         static_pen.color("#00ffcc")
         static_pen.write("রাষ্ট্রভাষা বাংলা চাই!", align="center", font=("Arial", 22, "bold"))
     except:
         pass
 
-    urdu_letters = ["ا", "ب", "پ", "ت", "ج", "چ", "خ", "د"]
-    for i in range(8):
-        static_pen.penup()
-        safe_goto(static_pen, random.randint(-380, -100), random.randint(-20, 120))
-        static_pen.color("#5a6b5d")
-        static_pen.write(urdu_letters[i], align="center", font=("Arial", 28, "bold"))
-
     for s in soldiers:
         draw_soldier(static_pen, s["x"], s["y"])
-
-    # Draw initial students
     for st in students:
         draw_student(student_pen, st["x"], st["y"], state=st["state"])
 
-    safe_update(screen)
+    urdu_chars = ["ا", "ب", "پ", "ت", "ج", "چ", "خ", "د"]
+    urdu_active = [{"char": c, "x": random.randint(-380, -150), "y": random.randint(0, 140)} for c in urdu_chars]
 
-    # --- 3 FAST VOLLEYS OF FIRE ---
+    def draw_urdu():
+        urdu_pen.clear()
+        for u in urdu_active:
+            urdu_pen.penup()
+            safe_goto(urdu_pen, u["x"], u["y"])
+            urdu_pen.color("#90EE90")
+            urdu_pen.write(u["char"], align="center", font=("Arial", 36, "bold"))
+
+    draw_urdu()
+    safe_update(screen)
+    time.sleep(0.5)
+
     bangla_chars = ["অ", "আ", "ক", "খ", "গ", "ঘ", "ঙ", "চ", "ছ", "জ", "ঝ", "ঞ", "ট", "ঠ", "ড", "ঢ", "ণ", "ত", "থ", "দ",
-                    "ধ", "ন", "প", "ফ", "ব", "ভ", "ম", "য", "র", "ল", "শ", "ষ", "স", "হ"]
-    active_letters = []
+                    "ধ", "ন", "প", "ফ", "ব", "ভ", "ম", "য", "র", "ল", "শ", "ষ", "স", "হ", "ঈ", "ঋ"]
+    active_bangla_letters = []
+    blood_stages = ["বাং", "বাংলা ভা", "বাংলা ভাষা"]
+    used_letter_positions = []
 
     for volley in range(3):
-        # 1. Spawn letters
-        for _ in range(2):
-            bx = random.randint(30, 350);
-            by = random.randint(-40, 100)
+        if len(urdu_active) > 2:
+            urdu_active = random.sample(urdu_active, len(urdu_active) - 3)
+        else:
+            urdu_active = []
+        draw_urdu()
+
+        for _ in range(6):
+            bx, by = get_safe_bangla_pos(used_letter_positions)
             char = random.choice(bangla_chars)
-            active_letters.append({"char": char, "x": bx, "y": by, "color": "#F8F9FA"})
-            student_pen.penup();
-            safe_goto(student_pen, bx, by)
-            student_pen.color("#F8F9FA");
-            student_pen.write(char, align="center", font=("Arial", 28, "bold"))
+            active_bangla_letters.append({"char": char, "x": bx, "y": by, "color": "#F8F9FA"})
 
-        # 2. Fast Bullet Dash (Only 1 frame of movement to make it lightning fast)
+        bullet_length = 25
+        frames = 8
+        for frame in range(frames):
+            bullet_pen.clear()
+            for s in soldiers:
+                start_x = s["x"] + 45
+                end_x = start_x + 220
+                tx = (end_x - start_x) * (frame / float(frames - 1))
+                curr_x, curr_y = translate_2d(start_x, s["y"] + 8, tx, 0)
+                bullet_pen.penup()
+                safe_goto(bullet_pen, curr_x, curr_y)
+                bullet_pen.pendown()
+                bullet_pen.color("orange")
+                bullet_pen.pensize(3)
+                safe_goto(bullet_pen, curr_x + bullet_length, curr_y)
+            safe_update(screen)
+            time.sleep(0.04)
+
         bullet_pen.clear()
-        bullet_pen.pensize(4)
-        bullet_pen.color("orange")
-        for s in soldiers:
-            bullet_pen.penup()
-            safe_goto(bullet_pen, s["x"] + 45, s["y"] + 8)
-            bullet_pen.pendown()
-            safe_goto(bullet_pen, s["x"] + 250, s["y"] + 8)  # Long fast bullet line stretching towards students
-
-        safe_update(screen)
-        time.sleep(0.01)  # Tiny wait just so the bullet flash is visible
-
-        # 3. Bullet Hits & Instant Death
-        bullet_pen.clear()
-
         if volley == 0:
             students[0]["state"] = "fallen"
         elif volley == 1:
@@ -279,28 +288,45 @@ def play_animation_1952(screen, pen):
         elif volley == 2:
             students[3]["state"] = "fallen"
 
-            # Turn some letters red
-        if active_letters:
-            random.choice(active_letters)["color"] = "#FF0000"
+        if active_bangla_letters:
+            for _ in range(5):
+                random.choice(active_bangla_letters)["color"] = "#FF0000"
 
-        # Only clear and redraw the students and letters, NOT the whole scene (Zero lag)
         student_pen.clear()
         for st in students:
             draw_student(student_pen, st["x"], st["y"], state=st["state"])
-        for letter in active_letters:
-            student_pen.penup();
+
+        for letter in active_bangla_letters:
+            student_pen.penup()
             safe_goto(student_pen, letter["x"], letter["y"])
-            student_pen.color(letter["color"]);
+            student_pen.color(letter["color"])
             student_pen.write(letter["char"], align="center", font=("Arial", 28, "bold"))
 
-        safe_update(screen)
-        time.sleep(0.00)  # Instant transition to next volley
+        blood_text_pen.clear()
+        blood_text_pen.penup()
+        safe_goto(blood_text_pen, 130, 80)
+        blood_text_pen.color("#B22222")
+        blood_text_pen.write(blood_stages[volley], align="center", font=("Arial", 38, "bold"))
 
-    # --- PHASE 3: THE MONUMENT RISES IMMEDIATELY ---
-    # NO time.sleep here at all. Immediately clear and draw monument.
+        if volley == 2:
+            for _ in range(25):
+                blood_text_pen.penup()
+                sx = 130 + random.randint(-110, 110)
+                sy = 100 + random.randint(-30, 40)
+                safe_goto(blood_text_pen, sx, sy)
+                blood_text_pen.color("#8B0000")
+                blood_text_pen.dot(random.randint(4, 10))
+
+        safe_update(screen)
+        time.sleep(1.2)
+
+    time.sleep(1.5)
+
     bullet_pen.clear()
     student_pen.clear()
     static_pen.clear()
+    urdu_pen.clear()
+    blood_text_pen.clear()
     pen.clear()
 
     try:
